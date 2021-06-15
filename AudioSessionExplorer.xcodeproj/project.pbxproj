@@ -24,6 +24,7 @@
 		A55EABCF266ABDBA00E6E11A /* project-echo-07.m4a in Resources */ = {isa = PBXBuildFile; fileRef = A55EABC4266ABDBA00E6E11A /* project-echo-07.m4a */; };
 		A55EABD2266AC25700E6E11A /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A55EABD1266AC25700E6E11A /* SettingsViewController.m */; };
 		A55EABD5266AC80400E6E11A /* AppAudioSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A55EABD4266AC80400E6E11A /* AppAudioSession.m */; };
+		A57174AB267914AF001DE9A9 /* SettingsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = A57174AA267914AF001DE9A9 /* SettingsStorage.m */; };
 		A58FDEEE2670EB7F00D9BAB5 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5793E922670A516009DF7A3 /* AVKit.framework */; };
 		A5BE745D2678915300AC31DF /* EventLogViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A5BE745C2678915300AC31DF /* EventLogViewController.m */; };
 		A5BE74602678919500AC31DF /* EventLog.m in Sources */ = {isa = PBXBuildFile; fileRef = A5BE745F2678919500AC31DF /* EventLog.m */; };
@@ -60,6 +61,8 @@
 		A55EABD1266AC25700E6E11A /* SettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
 		A55EABD3266AC80400E6E11A /* AppAudioSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppAudioSession.h; sourceTree = "<group>"; };
 		A55EABD4266AC80400E6E11A /* AppAudioSession.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppAudioSession.m; sourceTree = "<group>"; };
+		A57174A9267914AF001DE9A9 /* SettingsStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingsStorage.h; sourceTree = "<group>"; };
+		A57174AA267914AF001DE9A9 /* SettingsStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingsStorage.m; sourceTree = "<group>"; };
 		A5793E922670A516009DF7A3 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		A5BE745B2678915300AC31DF /* EventLogViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventLogViewController.h; sourceTree = "<group>"; };
 		A5BE745C2678915300AC31DF /* EventLogViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EventLogViewController.m; sourceTree = "<group>"; };
@@ -99,6 +102,8 @@
 				A55EABD4266AC80400E6E11A /* AppAudioSession.m */,
 				A521BE75266BB6DC0031F7E2 /* SettingsModel.h */,
 				A521BE76266BB6DC0031F7E2 /* SettingsModel.m */,
+				A57174A9267914AF001DE9A9 /* SettingsStorage.h */,
+				A57174AA267914AF001DE9A9 /* SettingsStorage.m */,
 				A55EABD0266AC25700E6E11A /* SettingsViewController.h */,
 				A55EABD1266AC25700E6E11A /* SettingsViewController.m */,
 			);
@@ -291,6 +296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A57174AB267914AF001DE9A9 /* SettingsStorage.m in Sources */,
 				A55EABD2266AC25700E6E11A /* SettingsViewController.m in Sources */,
 				C48F9141266DFE2A00DC4655 /* MediaCenter.m in Sources */,
 				A5CE864B266A9D4700F5F345 /* AppDelegate.m in Sources */,

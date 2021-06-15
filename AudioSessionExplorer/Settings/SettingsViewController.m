@@ -1,5 +1,6 @@
 #import <AVKit/AVKit.h>
 #import "AppAudioSession.h"
+#import "SettingsStorage.h"
 #import "SettingsViewController.h"
 
 
@@ -20,7 +21,8 @@
 @property (weak, nonatomic) IBOutlet UISwitch* overrideMutedMicSwitch;
 @property (weak, nonatomic) IBOutlet UITextView* statusTextView;
 @property (weak, nonatomic) IBOutlet UIToolbar* stateToolbar;
-@property (strong, nonatomic) NSMutableDictionary<NSNumber*, SettingsModel*>* savedStates;
+@property (strong, nonatomic) IBOutlet UIBarButtonItem* saveStateButton;
+@property (strong, nonatomic) IBOutlet UIBarButtonItem* clearStateButton;
 
 @end
 
@@ -29,7 +31,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.savedStates = [NSMutableDictionary dictionary];
 
     NSArray* items = @[
         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
@@ -37,6 +38,8 @@
         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
     ];
     [self setToolbarItems:items animated:NO];
+
+    [self loadSavedStatesAnimated:NO];
 
     AppAudioSession.sharedSession.delegate = self;
     [self loadSessionState];
@@ -134,24 +137,42 @@
     [AppAudioSession.sharedSession setOverrideMutedMic:self.overrideMutedMicSwitch.isOn];
 }
 
-- (IBAction)handleSaveStateButton:(id)sender {
-    NSInteger buttonId = self.stateToolbar.items.count;
-
-    SettingsModel* settingsModel = AppAudioSession.sharedSession.settingsModel;
-    self.savedStates[@(buttonId)] = settingsModel;
-
-    NSString* title = [NSString stringWithFormat:@"#%d", (int)buttonId];
-    UIBarButtonItem* button = [[UIBarButtonItem alloc] initWithTitle:title style:(UIBarButtonItemStylePlain) target:self action:@selector(handleLoadStateButton:)];
-    button.tag = buttonId;
+- (void)loadSavedStatesAnimated:(BOOL)animated {
+    NSArray* savedStates = [SettingsStorage.sharedStorage savedStates];
     
-    [self.stateToolbar setItems:[self.stateToolbar.items arrayByAddingObject:button] animated:YES];
+    NSMutableArray* items = [NSMutableArray array];
+    [items addObject:self.saveStateButton];
+    
+    [savedStates enumerateObjectsUsingBlock:^(SettingsModel* model, NSUInteger idx, BOOL* stop) {
+        NSString* title = [NSString stringWithFormat:@"#%d", (int)idx + 1];
+        UIBarButtonItem* button = [[UIBarButtonItem alloc] initWithTitle:title style:(UIBarButtonItemStylePlain) target:self action:@selector(handleLoadStateButton:)];
+        button.tag = idx;
+        [items addObject:button];
+    }];
+    
+    if (savedStates.count > 0) {
+        [items addObject:[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil]];
+        [items addObject:self.clearStateButton];
+    }
+    
+    [self.stateToolbar setItems:items animated:animated];
+}
+
+- (IBAction)handleSaveStateButton:(id)sender {
+    SettingsModel* settingsModel = AppAudioSession.sharedSession.settingsModel;
+    [SettingsStorage.sharedStorage saveState:settingsModel];
+    [self loadSavedStatesAnimated:YES];
+}
+
+- (IBAction)handleClearStateButton:(id)sender {
+    [SettingsStorage.sharedStorage removeLastSavedState];
+    [self loadSavedStatesAnimated:YES];
 }
 
 - (IBAction)handleLoadStateButton:(UIBarButtonItem*)sender {
-    if (sender.tag) {
-        SettingsModel* model = self.savedStates[@(sender.tag)];
-        [AppAudioSession.sharedSession loadFromSettingsModel:model];
-    }
+    NSArray* savedStates = [SettingsStorage.sharedStorage savedStates];
+    SettingsModel* model = savedStates[sender.tag];
+    [AppAudioSession.sharedSession loadFromSettingsModel:model];
 }
 
 - (void)audioSession:(AppAudioSession *)audioSession wasInterruptedWithReason:(AVAudioSessionInterruptionReason)reason {

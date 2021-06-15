@@ -86,6 +86,12 @@
                                                             <action selector="handleSaveStateButton:" destination="BYZ-38-t0r" id="VEj-Ew-BMW"/>
                                                         </connections>
                                                     </barButtonItem>
+                                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="Qu1-Mr-DCv"/>
+                                                    <barButtonItem systemItem="stop" id="ey6-Ud-dB9">
+                                                        <connections>
+                                                            <action selector="handleClearStateButton:" destination="BYZ-38-t0r" id="Kxb-Pu-vIy"/>
+                                                        </connections>
+                                                    </barButtonItem>
                                                 </items>
                                             </toolbar>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Category" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="r6B-4K-XoY">
@@ -374,6 +380,7 @@
                         <outlet property="allowBluetoothA2DPSwitch" destination="x1r-z2-43W" id="RE7-Qs-jkV"/>
                         <outlet property="allowBluetoothSwitch" destination="YRZ-id-MSN" id="W60-ux-UF8"/>
                         <outlet property="categoryButton" destination="PwD-l0-pIo" id="nXA-As-fEv"/>
+                        <outlet property="clearStateButton" destination="ey6-Ud-dB9" id="m3o-k3-zoF"/>
                         <outlet property="defaultToSpeakerSwitch" destination="9lO-95-H4r" id="ysl-4M-NU9"/>
                         <outlet property="duckOthersSwitch" destination="zNf-Z1-ex6" id="QTg-N4-CSN"/>
                         <outlet property="forceOutputToSpeakerSwitch" destination="eWG-tW-4vo" id="mSU-UY-9vC"/>
@@ -383,6 +390,7 @@
                         <outlet property="overrideMutedMicSwitch" destination="c5Q-du-hBO" id="KSS-n4-DBr"/>
                         <outlet property="policyButton" destination="kBg-N5-wPP" id="hPK-cp-wZG"/>
                         <outlet property="routePickerView" destination="aRl-ce-HZR" id="f6e-8N-zwK"/>
+                        <outlet property="saveStateButton" destination="qjh-mT-UWq" id="d8b-Bu-iME"/>
                         <outlet property="stateToolbar" destination="KxD-6d-aa1" id="96M-yK-Y5A"/>
                         <outlet property="statusTextView" destination="6JS-my-Uj9" id="sI9-82-pBx"/>
                     </connections>
