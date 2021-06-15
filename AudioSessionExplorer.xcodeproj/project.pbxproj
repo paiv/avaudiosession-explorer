@@ -25,6 +25,9 @@
 		A55EABD2266AC25700E6E11A /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A55EABD1266AC25700E6E11A /* SettingsViewController.m */; };
 		A55EABD5266AC80400E6E11A /* AppAudioSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A55EABD4266AC80400E6E11A /* AppAudioSession.m */; };
 		A58FDEEE2670EB7F00D9BAB5 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5793E922670A516009DF7A3 /* AVKit.framework */; };
+		A5BE745D2678915300AC31DF /* EventLogViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A5BE745C2678915300AC31DF /* EventLogViewController.m */; };
+		A5BE74602678919500AC31DF /* EventLog.m in Sources */ = {isa = PBXBuildFile; fileRef = A5BE745F2678919500AC31DF /* EventLog.m */; };
+		A5BE74632678931B00AC31DF /* EventLogCell.m in Sources */ = {isa = PBXBuildFile; fileRef = A5BE74622678931B00AC31DF /* EventLogCell.m */; };
 		A5CE864B266A9D4700F5F345 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A5CE864A266A9D4700F5F345 /* AppDelegate.m */; };
 		A5CE8654266A9D4700F5F345 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A5CE8652266A9D4700F5F345 /* Main.storyboard */; };
 		A5CE8656266A9D4800F5F345 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A5CE8655266A9D4800F5F345 /* Assets.xcassets */; };
@@ -58,6 +61,12 @@
 		A55EABD3266AC80400E6E11A /* AppAudioSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppAudioSession.h; sourceTree = "<group>"; };
 		A55EABD4266AC80400E6E11A /* AppAudioSession.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppAudioSession.m; sourceTree = "<group>"; };
 		A5793E922670A516009DF7A3 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
+		A5BE745B2678915300AC31DF /* EventLogViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventLogViewController.h; sourceTree = "<group>"; };
+		A5BE745C2678915300AC31DF /* EventLogViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EventLogViewController.m; sourceTree = "<group>"; };
+		A5BE745E2678919500AC31DF /* EventLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventLog.h; sourceTree = "<group>"; };
+		A5BE745F2678919500AC31DF /* EventLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EventLog.m; sourceTree = "<group>"; };
+		A5BE74612678931B00AC31DF /* EventLogCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventLogCell.h; sourceTree = "<group>"; };
+		A5BE74622678931B00AC31DF /* EventLogCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EventLogCell.m; sourceTree = "<group>"; };
 		A5CE8646266A9D4700F5F345 /* Explorer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Explorer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5CE8649266A9D4700F5F345 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		A5CE864A266A9D4700F5F345 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -146,6 +155,19 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		A5BE745A2678913100AC31DF /* EventLog */ = {
+			isa = PBXGroup;
+			children = (
+				A5BE745E2678919500AC31DF /* EventLog.h */,
+				A5BE745F2678919500AC31DF /* EventLog.m */,
+				A5BE74612678931B00AC31DF /* EventLogCell.h */,
+				A5BE74622678931B00AC31DF /* EventLogCell.m */,
+				A5BE745B2678915300AC31DF /* EventLogViewController.h */,
+				A5BE745C2678915300AC31DF /* EventLogViewController.m */,
+			);
+			path = EventLog;
+			sourceTree = "<group>";
+		};
 		A5CE863D266A9D4700F5F345 = {
 			isa = PBXGroup;
 			children = (
@@ -168,6 +190,7 @@
 			children = (
 				A5CE8662266A9DFA00F5F345 /* App */,
 				A55EABA1266ABCA900E6E11A /* Assets */,
+				A5BE745A2678913100AC31DF /* EventLog */,
 				A5CE865A266A9D4800F5F345 /* Info.plist */,
 				A521BE79266BBDBD0031F7E2 /* Player */,
 				A521BE78266BBDBA0031F7E2 /* Settings */,
@@ -272,9 +295,12 @@
 				C48F9141266DFE2A00DC4655 /* MediaCenter.m in Sources */,
 				A5CE864B266A9D4700F5F345 /* AppDelegate.m in Sources */,
 				A521BE7F266BBEC00031F7E2 /* Playlist.m in Sources */,
+				A5BE745D2678915300AC31DF /* EventLogViewController.m in Sources */,
 				A521BE7C266BBE2F0031F7E2 /* PlaylistViewController.m in Sources */,
 				A5CE865C266A9D4800F5F345 /* main.m in Sources */,
 				A55EABD5266AC80400E6E11A /* AppAudioSession.m in Sources */,
+				A5BE74602678919500AC31DF /* EventLog.m in Sources */,
+				A5BE74632678931B00AC31DF /* EventLogCell.m in Sources */,
 				A537286526713026003542D5 /* RecorderSettings.m in Sources */,
 				A521BE77266BB6DC0031F7E2 /* SettingsModel.m in Sources */,
 			);

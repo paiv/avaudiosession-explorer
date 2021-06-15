@@ -24,13 +24,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic) BOOL mixWithOthers;
 @property (assign, nonatomic) BOOL interruptSpokenAudio;
 @property (assign, nonatomic) BOOL overrideMutedMic;
-@property (strong, nonatomic, nullable) NSError* lastError;
+@property (strong, nonatomic, readonly, nullable) NSError* lastError;
 
 @property (strong, nonatomic, readonly) AVAudioSessionRouteDescription* currentRoute;
 @property (strong, nonatomic, readonly) NSArray<AVAudioSessionCategory>* availableCategories;
 @property (strong, nonatomic, readonly) NSArray<AVAudioSessionMode>* availableModes;
 @property (strong, nonatomic, readonly) NSArray<NSNumber*>* availableRouteSharingPolicies;
 @property (strong, nonatomic, readonly) NSArray<AVAudioSessionPortDescription*>* availableInputs;
+- (NSString*)currentRouteDescription;
+- (NSString*)availableRoutesDescription;
 
 - (void)setActive:(BOOL)active;
 
@@ -47,5 +49,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)audioSession:(AppAudioSession*)audioSession didChangeConfiguration:(id)sender;
 
 @end
+
+
+extern NSString* NSStringFromAVAudioSessionCategory(AVAudioSessionCategory category);
+extern NSString* NSStringFromAVAudioSessionMode(AVAudioSessionMode mode);
+extern NSString* NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy policy);
+extern NSString* NSStringFromAVAudioSessionCategoryOptions(AVAudioSessionCategoryOptions options);
+
 
 NS_ASSUME_NONNULL_END

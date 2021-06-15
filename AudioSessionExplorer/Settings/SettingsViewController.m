@@ -25,22 +25,6 @@
 @end
 
 
-static NSString*
-NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy policy) {
-    switch (policy) {
-        case AVAudioSessionRouteSharingPolicyDefault:
-            return @"AVAudioSessionRouteSharingPolicyDefault";
-        case AVAudioSessionRouteSharingPolicyLongFormAudio:
-            return @"AVAudioSessionRouteSharingPolicyLongFormAudio";
-        case AVAudioSessionRouteSharingPolicyIndependent:
-            return @"AVAudioSessionRouteSharingPolicyIndependent";
-        case AVAudioSessionRouteSharingPolicyLongFormVideo:
-            return @"AVAudioSessionRouteSharingPolicyLongFormVideo";
-    }
-    return nil;
-}
-
-
 @implementation SettingsViewController
 
 - (void)viewDidLoad {
@@ -58,10 +42,10 @@ NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy po
 - (IBAction)handleCategoryButton:(id)sender {
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:(UIAlertControllerStyleActionSheet)];
     
-    for (NSString* name in AppAudioSession.sharedSession.availableCategories) {
-        NSString* title = [name substringFromIndex:@"AVAudioSessionCategory".length];
+    for (AVAudioSessionCategory category in AppAudioSession.sharedSession.availableCategories) {
+        NSString* title = NSStringFromAVAudioSessionCategory(category);
         UIAlertAction* action = [UIAlertAction actionWithTitle:title style:(UIAlertActionStyleDefault) handler:^(UIAlertAction * _Nonnull action) {
-            [AppAudioSession.sharedSession setCategory:name];
+            [AppAudioSession.sharedSession setCategory:category];
         }];
         [alert addAction:action];
     }
@@ -75,10 +59,10 @@ NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy po
 - (IBAction)handleModeButton:(id)sender {
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:(UIAlertControllerStyleActionSheet)];
     
-    for (NSString* name in AppAudioSession.sharedSession.availableModes) {
-        NSString* title = [name substringFromIndex:@"AVAudioSessionMode".length];
+    for (AVAudioSessionMode mode in AppAudioSession.sharedSession.availableModes) {
+        NSString* title = NSStringFromAVAudioSessionMode(mode);
         UIAlertAction* action = [UIAlertAction actionWithTitle:title style:(UIAlertActionStyleDefault) handler:^(UIAlertAction * _Nonnull action) {
-            [AppAudioSession.sharedSession setMode:name];
+            [AppAudioSession.sharedSession setMode:mode];
         }];
         [alert addAction:action];
     }
@@ -93,8 +77,7 @@ NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy po
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:(UIAlertControllerStyleActionSheet)];
     
     for (NSNumber* policy in AppAudioSession.sharedSession.availableRouteSharingPolicies) {
-        NSString* name = NSStringFromAVAudioSessionRouteSharingPolicy(policy.unsignedIntegerValue);
-        NSString* title = [name substringFromIndex:@"AVAudioSessionRouteSharingPolicy".length];
+        NSString* title = NSStringFromAVAudioSessionRouteSharingPolicy(policy.unsignedIntegerValue);
         UIAlertAction* action = [UIAlertAction actionWithTitle:title style:(UIAlertActionStyleDefault) handler:^(UIAlertAction * _Nonnull action) {
             [AppAudioSession.sharedSession setPolicy:policy.unsignedIntegerValue];
         }];
@@ -169,9 +152,9 @@ NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy po
 
 - (void)loadSessionState {
     AppAudioSession* session = AppAudioSession.sharedSession;
-    [self.categoryButton setTitle:[session.category substringFromIndex:@"AVAudioSessionCategory".length] forState:(UIControlStateNormal)];
-    [self.modeButton setTitle:[session.mode substringFromIndex:@"AVAudioSessionMode".length] forState:(UIControlStateNormal)];
-    [self.policyButton setTitle:[NSStringFromAVAudioSessionRouteSharingPolicy(session.policy) substringFromIndex:@"AVAudioSessionRouteSharingPolicy".length] forState:(UIControlStateNormal)];
+    [self.categoryButton setTitle:NSStringFromAVAudioSessionCategory(session.category) forState:(UIControlStateNormal)];
+    [self.modeButton setTitle:NSStringFromAVAudioSessionMode(session.mode) forState:(UIControlStateNormal)];
+    [self.policyButton setTitle:NSStringFromAVAudioSessionRouteSharingPolicy(session.policy) forState:(UIControlStateNormal)];
     self.forceOutputToSpeakerSwitch.on = session.forceOutputToSpeaker;
     self.allowBluetoothSwitch.on = session.allowBluetooth;
     self.allowBluetoothA2DPSwitch.on = session.allowBluetoothA2DP;
@@ -188,41 +171,9 @@ NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy po
         [so appendFormat:@"%@\n\n", session.lastError.localizedDescription];
     }
     
-    void(^formatPortDescription)(AVAudioSessionPortDescription*) = ^(AVAudioSessionPortDescription* port) {
-        [so appendFormat:@"%@:%@\n", port.portType, port.portName];
-        
-        NSMutableArray* sources = [NSMutableArray array];
-        [port.dataSources enumerateObjectsUsingBlock:^(AVAudioSessionDataSourceDescription* source, NSUInteger idx, BOOL * _Nonnull stop) {
-            NSString* name = source.dataSourceName;
-            if ([port.selectedDataSource isEqual:source]) {
-                name = [name stringByAppendingString:@" (+)"];
-            }
-            [sources addObject:name];
-        }];
-        if (sources.count) {
-            [so appendFormat: @"  %@\n", [sources componentsJoinedByString:@", "]];
-        }
-        else if (port.selectedDataSource) {
-            [so appendFormat:@"  %@\n", port.selectedDataSource.dataSourceName];
-        }
-    };
-    
-    [so appendString:@"Current route:\n"];
-    AVAudioSessionRouteDescription* currentRoute = session.currentRoute;
-    for (AVAudioSessionPortDescription* port in currentRoute.inputs) {
-        [so appendString:@"in "];
-        formatPortDescription(port);
-    }
-    for (AVAudioSessionPortDescription* port in currentRoute.outputs) {
-        [so appendString:@"out "];
-        formatPortDescription(port);
-    }
-    
-    [so appendString:@"\nAvailable inputs:\n"];
-    for (AVAudioSessionPortDescription* port in session.availableInputs) {
-        [so appendString:@"in "];
-        formatPortDescription(port);
-    }
+    [so appendString:[session currentRouteDescription]];
+    [so appendString:@"\n"];
+    [so appendString:[session availableRoutesDescription]];
 
     self.statusTextView.text = so;
 }

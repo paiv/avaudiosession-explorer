@@ -1,8 +1,10 @@
 #import "AppAudioSession.h"
+#import "EventLog.h"
 
 
 @interface AppAudioSession ()
 
+@property (strong, nonatomic, nullable) NSError* lastError;
 @property (strong, nonatomic) id<NSObject> routeChangeObserver;
 @property (strong, nonatomic) NSTimer* notificationDelayTimer;
 
@@ -155,6 +157,7 @@
 }
 
 - (void)setBackendCategory:(AVAudioSessionCategory)category mode:(AVAudioSessionMode)mode policy:(AVAudioSessionRouteSharingPolicy)policy options:(AVAudioSessionCategoryOptions)options {
+    [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Set category\n%@, mode %@, sharing policy %@, options %@", NSStringFromAVAudioSessionCategory(category), NSStringFromAVAudioSessionMode(mode), NSStringFromAVAudioSessionRouteSharingPolicy(policy), NSStringFromAVAudioSessionCategoryOptions(options)]];
     @try {
         NSError* error = nil;
         [self.backend setCategory:category mode:mode routeSharingPolicy:policy options:options error:&error];
@@ -170,6 +173,7 @@
 }
 
 - (void)setActive:(BOOL)active {
+    [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Set active %d", (int)active]];
     NSError* error = nil;
     [self.backend setActive:active error:&error];
     self.lastError = error;
@@ -178,6 +182,7 @@
 - (void)setLastError:(NSError *)lastError {
     _lastError = lastError;
     if (_lastError) {
+        [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Error\n%@", _lastError]];
         [self notifyDidChangeConfiguration];
     }
 }
@@ -195,7 +200,18 @@
     }];
 }
 
+- (void)logRouteChangeEvent {
+    NSMutableString* so = [NSMutableString string];
+    [so appendString:@"Route changed\n"];
+    [so appendString:[self currentRouteDescription]];
+    [so appendString:@"\n"];
+    [so appendString:[self availableRoutesDescription]];
+
+    [EventLog.sharedEventLog addEntry:so];
+}
+
 - (void)handleRouteChange:(NSNotification*)notification {
+    [self logRouteChangeEvent];
     [self notifyDidChangeConfiguration];
 }
 
@@ -227,6 +243,55 @@
     return self.backend.availableInputs;
 }
 
+static void
+formatPortDescription(NSMutableString* so, AVAudioSessionPortDescription* port) {
+    [so appendFormat:@"%@:%@\n", port.portType, port.portName];
+    
+    NSMutableArray* sources = [NSMutableArray array];
+    [port.dataSources enumerateObjectsUsingBlock:^(AVAudioSessionDataSourceDescription* source, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString* name = source.dataSourceName;
+        if ([port.selectedDataSource isEqual:source]) {
+            name = [name stringByAppendingString:@" (+)"];
+        }
+        [sources addObject:name];
+    }];
+    if (sources.count) {
+        [so appendFormat: @"  %@\n", [sources componentsJoinedByString:@", "]];
+    }
+    else if (port.selectedDataSource) {
+        [so appendFormat:@"  %@\n", port.selectedDataSource.dataSourceName];
+    }
+}
+
+- (NSString *)currentRouteDescription {
+    NSMutableString* so = [NSMutableString string];
+    
+    [so appendString:@"Current route:\n"];
+    AVAudioSessionRouteDescription* currentRoute = self.currentRoute;
+    for (AVAudioSessionPortDescription* port in currentRoute.inputs) {
+        [so appendString:@"in "];
+        formatPortDescription(so, port);
+    }
+    for (AVAudioSessionPortDescription* port in currentRoute.outputs) {
+        [so appendString:@"out "];
+        formatPortDescription(so, port);
+    }
+    
+    return so;
+}
+
+- (NSString *)availableRoutesDescription {
+    NSMutableString* so = [NSMutableString string];
+    
+    [so appendString:@"Available inputs:\n"];
+    for (AVAudioSessionPortDescription* port in self.availableInputs) {
+        [so appendString:@"in "];
+        formatPortDescription(so, port);
+    }
+    
+    return so;
+}
+
 - (SettingsModel *)settingsModel {
     SettingsModel* model = [[SettingsModel alloc] init];
     model.category = self.category;
@@ -246,3 +311,67 @@
 }
 
 @end
+
+
+NSString*
+NSStringFromAVAudioSessionCategory(AVAudioSessionCategory category) {
+    return [category substringFromIndex:@"AVAudioSessionCategory".length];
+}
+
+
+NSString*
+NSStringFromAVAudioSessionMode(AVAudioSessionMode mode) {
+    return [mode substringFromIndex:@"AVAudioSessionMode".length];
+}
+
+
+NSString*
+NSStringFromAVAudioSessionRouteSharingPolicy(AVAudioSessionRouteSharingPolicy policy) {
+    switch (policy) {
+        case AVAudioSessionRouteSharingPolicyDefault:
+            return @"Default";
+        case AVAudioSessionRouteSharingPolicyLongFormAudio:
+            return @"LongFormAudio";
+        case AVAudioSessionRouteSharingPolicyIndependent:
+            return @"Independent";
+        case AVAudioSessionRouteSharingPolicyLongFormVideo:
+            return @"LongFormVideo";
+    }
+    return nil;
+}
+
+
+NSString*
+NSStringFromAVAudioSessionCategoryOptions(AVAudioSessionCategoryOptions options) {
+    NSMutableArray* res = [NSMutableArray array];
+    if ((options & AVAudioSessionCategoryOptionMixWithOthers) == AVAudioSessionCategoryOptionMixWithOthers) {
+        [res addObject:@"MixWithOthers"];
+    }
+    if ((options & AVAudioSessionCategoryOptionDuckOthers) == AVAudioSessionCategoryOptionDuckOthers) {
+        [res addObject:@"DuckOthers"];
+    }
+    if ((options & AVAudioSessionCategoryOptionAllowBluetooth) == AVAudioSessionCategoryOptionAllowBluetooth) {
+        [res addObject:@"AllowBluetooth"];
+    }
+    if ((options & AVAudioSessionCategoryOptionDefaultToSpeaker) == AVAudioSessionCategoryOptionDefaultToSpeaker) {
+        [res addObject:@"DefaultToSpeaker"];
+    }
+    if ((options & AVAudioSessionCategoryOptionInterruptSpokenAudioAndMixWithOthers) == AVAudioSessionCategoryOptionInterruptSpokenAudioAndMixWithOthers) {
+        [res addObject:@"InterruptSpokenAudioAndMixWithOthers"];
+    }
+    if ((options & AVAudioSessionCategoryOptionAllowBluetoothA2DP) == AVAudioSessionCategoryOptionAllowBluetoothA2DP) {
+        [res addObject:@"AllowBluetoothA2DP"];
+    }
+    if ((options & AVAudioSessionCategoryOptionAllowAirPlay) == AVAudioSessionCategoryOptionAllowAirPlay) {
+        [res addObject:@"AllowAirPlay"];
+    }
+    if (@available(iOS 14.5, *)) {
+        if ((options & AVAudioSessionCategoryOptionOverrideMutedMicrophoneInterruption) == AVAudioSessionCategoryOptionOverrideMutedMicrophoneInterruption) {
+            [res addObject:@"OverrideMutedMicrophoneInterruption"];
+        }
+    }
+    if (res.count) {
+        return [res componentsJoinedByString:@"+"];
+    }
+    return @"()";
+}

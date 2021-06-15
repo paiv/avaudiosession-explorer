@@ -1,5 +1,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import "AppAudioSession.h"
+#import "EventLog.h"
 #import "MediaCenter.h"
 #import "RecorderSettings.h"
 
@@ -31,7 +32,7 @@ NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCent
     NSError* error = nil;
     AVAudioPlayer* player = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
     if (error) {
-        NSLog(@"Player initialization error: %@", error.localizedDescription);
+        [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player initialization error\n%@", error]];
         return;
     }
     player.delegate = self;
@@ -50,7 +51,7 @@ NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCent
 }
 
 - (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
-    NSLog(@"Player decode error: %@", error.localizedDescription);
+    [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player decode error\n%@", error]];
 }
 
 - (void)startRecording {
@@ -65,7 +66,7 @@ NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCent
     NSError* error = nil;
     AVAudioRecorder* recorder = [[AVAudioRecorder alloc] initWithURL:recordingFileUrl settings:recordingSettings error:&error];
     if (error) {
-        NSLog(@"Recorder initialization error: %@", error.localizedDescription);
+        [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Recorder initialization error\n%@", error]];
         return;
     }
     recorder.delegate = self;
@@ -103,7 +104,7 @@ NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCent
 }
 
 - (void)audioRecorderEncodeErrorDidOccur:(AVAudioRecorder *)recorder error:(NSError *)error {
-    NSLog(@"Recorder encode error: %@", error.localizedDescription);
+    [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Recorder encode error\n%@", error]];
 }
 
 @end
