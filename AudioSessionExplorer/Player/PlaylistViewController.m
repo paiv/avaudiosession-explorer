@@ -1,4 +1,5 @@
 #import <AVKit/AVKit.h>
+#import "AppAudioSession.h"
 #import "MediaCenter.h"
 #import "Playlist.h"
 #import "PlaylistViewController.h"
@@ -10,6 +11,7 @@
 @property (weak, nonatomic) IBOutlet UIBarButtonItem* routePickerButtonItem;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem* startRecordingButtonItem;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem* stopRecordingButtonItem;
+@property (strong, nonatomic) id<NSObject> interruptionObserver;
 @property (strong, nonatomic) id<NSObject> recorderObserver;
 
 
@@ -19,13 +21,25 @@
 @implementation PlaylistViewController
 
 - (void)dealloc {
+    self.interruptionObserver = nil;
     self.recorderObserver = nil;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    NSArray* items = @[
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
+        [[UIBarButtonItem alloc] initWithTitle:@"Interrupted" style:(UIBarButtonItemStylePlain) target:nil action:nil],
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
+    ];
+    [self setToolbarItems:items animated:NO];
+
     __weak typeof(self) weakSelf = self;
+    self.interruptionObserver = [NSNotificationCenter.defaultCenter addObserverForName:AVAudioSessionInterruptionNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification* notification) {
+        [weakSelf handleInterruption:notification];
+    }];
+
     self.recorderObserver = [NSNotificationCenter.defaultCenter addObserverForName:MediaCenterDidFinishRecordingNotification object:MediaCenter.sharedMediaCenter queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification* notification) {
         [weakSelf mediaCenterDidFinishRecordingWithNotification:notification];
     }];
@@ -42,6 +56,13 @@
         isRecording ? self.stopRecordingButtonItem : self.startRecordingButtonItem,
         self.routePickerButtonItem];
     self.navigationItem.rightBarButtonItems = items;
+}
+
+- (void)setInterruptionObserver:(id<NSObject>)observer {
+    if (_interruptionObserver) {
+        [NSNotificationCenter.defaultCenter removeObserver:_interruptionObserver];
+    }
+    _interruptionObserver = observer;
 }
 
 - (void)setRecorderObserver:(id<NSObject>)observer {
@@ -107,6 +128,11 @@
         [Playlist.sharedPlaylist addUrl:recorder.url];
         [self.tableView reloadData];
     }
+}
+
+- (void)handleInterruption:(NSNotification*)notification {
+    BOOL isBeingInterrupted = AppAudioSession.sharedSession.isBeingInterrupted;
+    [self.navigationController setToolbarHidden:!isBeingInterrupted animated:YES];
 }
 
 @end

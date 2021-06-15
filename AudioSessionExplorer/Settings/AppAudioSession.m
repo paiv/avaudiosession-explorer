@@ -5,6 +5,8 @@
 @interface AppAudioSession ()
 
 @property (strong, nonatomic, nullable) NSError* lastError;
+@property (assign, nonatomic) BOOL isBeingInterrupted;
+@property (strong, nonatomic) id<NSObject> interruptionObserver;
 @property (strong, nonatomic) id<NSObject> routeChangeObserver;
 @property (strong, nonatomic) NSTimer* notificationDelayTimer;
 
@@ -26,6 +28,11 @@
     self = [super init];
     if (self) {
         __weak typeof(self) weakSelf = self;
+        
+        self.interruptionObserver = [NSNotificationCenter.defaultCenter addObserverForName:AVAudioSessionInterruptionNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification* notification) {
+            [weakSelf handleInterruption:notification];
+        }];
+        
         self.routeChangeObserver = [NSNotificationCenter.defaultCenter addObserverForName:AVAudioSessionRouteChangeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification * _Nonnull notification) {
             [weakSelf handleRouteChange:notification];
         }];
@@ -35,6 +42,13 @@
 
 - (void)dealloc {
     self.routeChangeObserver = nil;
+}
+
+- (void)setInterruptionObserver:(id<NSObject>)interruptionObserver {
+    if (_interruptionObserver) {
+        [NSNotificationCenter.defaultCenter removeObserver:_interruptionObserver];
+    }
+    _interruptionObserver = interruptionObserver;
 }
 
 - (void)setRouteChangeObserver:(id<NSObject>)routeChangeObserver {
@@ -213,6 +227,38 @@
 - (void)handleRouteChange:(NSNotification*)notification {
     [self logRouteChangeEvent];
     [self notifyDidChangeConfiguration];
+}
+
+- (void)handleInterruption:(NSNotification*)notification {
+    AVAudioSessionInterruptionType interruptionType = [notification.userInfo[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+    switch (interruptionType) {
+        case AVAudioSessionInterruptionTypeBegan: {
+            AVAudioSessionInterruptionReason reason = AVAudioSessionInterruptionReasonDefault;
+            if (@available(iOS 14.5, *)) {
+                reason = [notification.userInfo[AVAudioSessionInterruptionReasonKey] unsignedIntegerValue];
+           
+            }
+            else {
+                BOOL wasSuspended = [notification.userInfo[AVAudioSessionInterruptionWasSuspendedKey] boolValue];
+                if (wasSuspended) {
+                    reason = AVAudioSessionInterruptionReasonAppWasSuspended;
+                }
+            }
+            [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Interruption began, reason %d", (int)reason]];
+            self.isBeingInterrupted = reason != AVAudioSessionInterruptionReasonAppWasSuspended;
+            [self.delegate audioSession:self wasInterruptedWithReason:reason];
+            break;
+        }
+            
+        case AVAudioSessionInterruptionTypeEnded: {
+            AVAudioSessionInterruptionOptions options = [notification.userInfo[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+            BOOL shouldResume = (options & AVAudioSessionInterruptionOptionShouldResume) != 0;
+            [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Interruption ended, should resume %d", (int)shouldResume]];
+            self.isBeingInterrupted = NO;
+            [self.delegate audioSession:self didStopBeingInterruptedAndShouldResume:shouldResume];
+            break;
+        }
+    }
 }
 
 - (AVAudioSessionRouteDescription*)currentRoute {

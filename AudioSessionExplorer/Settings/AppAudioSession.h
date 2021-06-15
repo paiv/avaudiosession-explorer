@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic) BOOL interruptSpokenAudio;
 @property (assign, nonatomic) BOOL overrideMutedMic;
 @property (strong, nonatomic, readonly, nullable) NSError* lastError;
+@property (assign, nonatomic, readonly) BOOL isBeingInterrupted;
 
 @property (strong, nonatomic, readonly) AVAudioSessionRouteDescription* currentRoute;
 @property (strong, nonatomic, readonly) NSArray<AVAudioSessionCategory>* availableCategories;
@@ -46,6 +47,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol AppAudioSessionDelegate <NSObject>
 
+- (void)audioSession:(AppAudioSession*)audioSession wasInterruptedWithReason:(AVAudioSessionInterruptionReason)reason;
+- (void)audioSession:(AppAudioSession*)audioSession didStopBeingInterruptedAndShouldResume:(BOOL)shouldResume;
 - (void)audioSession:(AppAudioSession*)audioSession didChangeConfiguration:(id)sender;
 
 @end

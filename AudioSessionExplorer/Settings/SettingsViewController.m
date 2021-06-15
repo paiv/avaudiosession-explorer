@@ -30,6 +30,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.savedStates = [NSMutableDictionary dictionary];
+
+    NSArray* items = @[
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
+        [[UIBarButtonItem alloc] initWithTitle:@"Interrupted" style:(UIBarButtonItemStylePlain) target:nil action:nil],
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:(UIBarButtonSystemItemFlexibleSpace) target:nil action:nil],
+    ];
+    [self setToolbarItems:items animated:NO];
+
     AppAudioSession.sharedSession.delegate = self;
     [self loadSessionState];
 }
@@ -146,6 +154,14 @@
     }
 }
 
+- (void)audioSession:(AppAudioSession *)audioSession wasInterruptedWithReason:(AVAudioSessionInterruptionReason)reason {
+    [self loadSessionState];
+}
+
+- (void)audioSession:(AppAudioSession *)audioSession didStopBeingInterruptedAndShouldResume:(BOOL)shouldResume {
+    [self loadSessionState];
+}
+
 - (void)audioSession:(AppAudioSession *)audioSession didChangeConfiguration:(id)sender {
     [self loadSessionState];
 }
@@ -176,6 +192,8 @@
     [so appendString:[session availableRoutesDescription]];
 
     self.statusTextView.text = so;
+
+    [self.navigationController setToolbarHidden:!session.isBeingInterrupted animated:YES];
 }
 
 @end
