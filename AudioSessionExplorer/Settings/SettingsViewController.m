@@ -151,7 +151,6 @@
     }];
     
     if (savedStates.count > 0) {
-        [items addObject:[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil]];
         [items addObject:self.clearStateButton];
     }
     
