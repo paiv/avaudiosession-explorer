@@ -12,6 +12,7 @@
 @property (strong, nonatomic) IBOutlet UIBarButtonItem* startRecordingButtonItem;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem* stopRecordingButtonItem;
 @property (strong, nonatomic) id<NSObject> interruptionObserver;
+@property (strong, nonatomic) id<NSObject> playerObserver;
 @property (strong, nonatomic) id<NSObject> recorderObserver;
 
 
@@ -22,6 +23,7 @@
 
 - (void)dealloc {
     self.interruptionObserver = nil;
+    self.playerObserver = nil;
     self.recorderObserver = nil;
 }
 
@@ -40,6 +42,10 @@
         [weakSelf handleInterruption:notification];
     }];
 
+    self.playerObserver = [NSNotificationCenter.defaultCenter addObserverForName:MediaCenterWillStartPlayingNotification object:MediaCenter.sharedMediaCenter queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification* notification) {
+        [weakSelf mediaCenterWillStartPlayingWithNotification:notification];
+    }];
+
     self.recorderObserver = [NSNotificationCenter.defaultCenter addObserverForName:MediaCenterDidFinishRecordingNotification object:MediaCenter.sharedMediaCenter queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification* notification) {
         [weakSelf mediaCenterDidFinishRecordingWithNotification:notification];
     }];
@@ -47,7 +53,25 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self reloadSelection];
     [self reloadRecorderButton];
+}
+
+- (void)reloadSelection {
+    NSURL* url = MediaCenter.sharedMediaCenter.currentUrl;
+    NSUInteger index = NSNotFound;
+    
+    if (url) {
+        index = [self.playlist indexOfObject:url];
+    }
+    
+    if (index == NSNotFound) {
+        [self.tableView selectRowAtIndexPath:nil animated:YES scrollPosition:(UITableViewScrollPositionNone)];
+    }
+    else {
+        NSIndexPath* indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:(UITableViewScrollPositionMiddle)];
+    }
 }
 
 - (void)reloadRecorderButton {
@@ -63,6 +87,13 @@
         [NSNotificationCenter.defaultCenter removeObserver:_interruptionObserver];
     }
     _interruptionObserver = observer;
+}
+
+- (void)setPlayerObserver:(id<NSObject>)observer {
+    if (_playerObserver) {
+        [NSNotificationCenter.defaultCenter removeObserver:_playerObserver];
+    }
+    _playerObserver = observer;
 }
 
 - (void)setRecorderObserver:(id<NSObject>)observer {
@@ -91,8 +122,7 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSURL* itemUrl = self.playlist[indexPath.row];
-    [MediaCenter.sharedMediaCenter playUrl:itemUrl];
+    [MediaCenter.sharedMediaCenter playFromPlaylist:self.playlist atIndex:indexPath.row];
 }
 
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -108,6 +138,10 @@
         return nil;
     }
     return indexPath;
+}
+
+- (void)mediaCenterWillStartPlayingWithNotification:(NSNotification*)notification {
+    [self reloadSelection];
 }
 
 - (IBAction)handleStartRecordingButton:(id)sender {

@@ -5,9 +5,10 @@
 #import "RecorderSettings.h"
 
 
-@interface MediaCenter () <AVAudioPlayerDelegate, AVAudioRecorderDelegate>
+@interface MediaCenter () <AVAudioRecorderDelegate>
 
-@property (strong, nonatomic) AVAudioPlayer* currentPlayer;
+@property (strong, nonatomic) AVPlayer* currentPlayer;
+@property (strong, nonatomic) AVPlayerItem* currentPlayerItem;
 @property (strong, nonatomic) AVAudioRecorder* currentRecorder;
 
 @end
@@ -15,7 +16,11 @@
 
 @implementation MediaCenter
 
+NSNotificationName const MediaCenterWillStartPlayingNotification = @"MediaCenterWillStartPlayingNotification";
 NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCenterDidFinishRecordingNotification";
+
+static void* PlayerStatusObserverContext = &PlayerStatusObserverContext;
+static void* PlayerItemStatusObserverContext = &PlayerItemStatusObserverContext;
 
 + (instancetype)sharedMediaCenter {
     static dispatch_once_t onceToken;
@@ -26,32 +31,100 @@ NSNotificationName const MediaCenterDidFinishRecordingNotification = @"MediaCent
     return instance;
 }
 
-- (void)playUrl:(NSURL *)url {
-    [AppAudioSession.sharedSession setActive:YES];
-    
-    NSError* error = nil;
-    AVAudioPlayer* player = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
-    if (error) {
-        [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player initialization error\n%@", error]];
-        return;
+- (void)dealloc {
+    self.currentPlayer = nil;
+    self.currentPlayerItem = nil;
+}
+
+- (void)setCurrentPlayer:(AVPlayer *)currentPlayer {
+    if (_currentPlayer) {
+        [_currentPlayer removeObserver:self forKeyPath:@"currentItem"];
+        [_currentPlayer removeObserver:self forKeyPath:@"status"];
     }
-    player.delegate = self;
+    _currentPlayer = currentPlayer;
+    if (_currentPlayer) {
+        [_currentPlayer addObserver:self forKeyPath:@"status" options:(NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew) context:PlayerStatusObserverContext];
+        [_currentPlayer addObserver:self forKeyPath:@"currentItem" options:(NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew) context:PlayerStatusObserverContext];
+    }
+}
+
+- (void)setCurrentPlayerItem:(AVPlayerItem *)item {
+    if (_currentPlayerItem) {
+        [_currentPlayerItem removeObserver:self forKeyPath:@"status"];
+    }
+    _currentPlayerItem = item;
+    if (_currentPlayerItem) {
+        [_currentPlayerItem addObserver:self forKeyPath:@"status" options:(NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew) context:PlayerItemStatusObserverContext];
+    }
+}
+
+- (NSURL *)currentUrl {
+    AVAsset* asset = self.currentPlayerItem.asset;
+    if ([asset isKindOfClass:AVURLAsset.class]) {
+        return [(AVURLAsset*)asset URL];
+    }
+    return nil;
+}
+
+- (void)playFromPlaylist:(NSArray<NSURL *> *)playlist atIndex:(NSUInteger)index {
+    NSArray* sublist = [playlist subarrayWithRange:NSMakeRange(index, playlist.count - index)];
+    NSArray* items = [self playerItemsWithPlaylist:sublist];
+    AVQueuePlayer* player = [AVQueuePlayer queuePlayerWithItems:items];
+    self.currentPlayerItem = nil;
     self.currentPlayer = player;
     [player play];
 }
 
+- (NSArray<AVPlayerItem*>*)playerItemsWithPlaylist:(NSArray<NSURL*>*)playlist {
+    NSMutableArray* items = [NSMutableArray arrayWithCapacity:playlist.count];
+    [playlist enumerateObjectsUsingBlock:^(NSURL* url, NSUInteger idx, BOOL* stop) {
+        AVPlayerItem* item = [AVPlayerItem playerItemWithURL:url];
+        [items addObject:item];
+    }];
+    return items;
+}
+
+- (void)playUrl:(NSURL *)url {
+    [AppAudioSession.sharedSession setActive:YES];
+    
+    AVPlayerItem* item = [AVPlayerItem playerItemWithURL:url];
+    AVPlayer* player = [AVPlayer playerWithPlayerItem:item];
+    self.currentPlayer = player;
+    self.currentPlayerItem = item;
+    [player play];
+}
+
 - (void)stopUrl:(NSURL *)url {
-    if ([self.currentPlayer.url isEqual:url]) {
-        [self.currentPlayer stop];
+    if (!self.currentUrl || [self.currentUrl isEqual:url]) {
+        [self.currentPlayer pause];
     }
 }
 
-- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if (context == PlayerStatusObserverContext) {
+        AVPlayer* player = object;
+        if ([keyPath isEqualToString:@"status"]) {
+            if (player.status == AVPlayerStatusFailed) {
+                [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player error\n%@", player.error]];
+            }
+        }
+        else if ([keyPath isEqualToString:@"currentItem"]) {
+            self.currentPlayerItem = player.currentItem;
+            NSURL* url = self.currentUrl;
+            [NSNotificationCenter.defaultCenter postNotificationName:MediaCenterWillStartPlayingNotification object:self userInfo:url ? @{@"url":url} : @{}];
+        }
+        return;
+    }
     
-}
+    if (context == PlayerItemStatusObserverContext) {
+        AVPlayerItem* item = object;
+        if (item.status == AVPlayerItemStatusFailed) {
+            [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player error\n%@", item.error]];
+        }
+        return;
+    }
 
-- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
-    [EventLog.sharedEventLog addEntry:[NSString stringWithFormat:@"Player decode error\n%@", error]];
+    [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 }
 
 - (void)startRecording {
