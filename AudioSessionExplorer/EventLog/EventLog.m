@@ -26,7 +26,7 @@
         self.entries = [NSMutableArray array];
         
         NSDateFormatter* dateFormatter = [[NSDateFormatter alloc] init];
-        dateFormatter.dateFormat = @"hh:mm:ss.SSS";
+        dateFormatter.dateFormat = @"HH:mm:ss.SSS";
         self.dateFormatter = dateFormatter;
     }
     return self;
